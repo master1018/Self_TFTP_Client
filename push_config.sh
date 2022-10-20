@@ -1,0 +1,1 @@
+rm -rf src/tftp_client/.vs
