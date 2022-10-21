@@ -2,32 +2,55 @@
 #include "tftp_clinet_io.h"
 
 sTFTPClientMsgSendQueue g_TFTPClientMsgSendQueue;
-SOCKADDR_IN g_addr;
+SOCKADDR_IN g_serverAddr;
+SOCKADDR_IN g_clientAddr;
 SOCKET g_clientSock;
 
 bool tftp_clinet_io_build_connect(char* ip, int port)
 {
 	printf_s("connect to %s [%u]...\n", ip, port);
-
-	g_addr.sin_family = AF_INET;
-	g_addr.sin_addr.S_un.S_addr = inet_addr(ip);
-	g_addr.sin_port = htons(port);
+	bool retVal = true;
+	g_serverAddr.sin_family = AF_INET;
+	g_serverAddr.sin_addr.S_un.S_addr = inet_addr(ip);
+	g_serverAddr.sin_port = htons(port);
 
 	g_clientSock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (g_clientSock == INVALID_SOCKET)
 	{
-		return false;
+		retVal = false;
 	}
-	else
+
+	
+	if (bind(g_clientSock, (LPSOCKADDR)&g_clientAddr, sizeof(g_clientAddr)))
 	{
-		return true;
+		retVal = false;
 	}
+	
+	return retVal;
 }
 
 void test_send(uint8_t* pMsg)
 {
-	sendto(g_clientSock, (char*)pMsg, sizeof(pMsg), 0, (LPSOCKADDR)&g_addr, sizeof(g_addr));
-	test_send(pMsg);
+	/*SOCKADDR_IN addr;
+	addr.sin_port = 0;
+	addr.sin_family = AF_INET;
+	addr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+	if ((bind(g_clientSock, (LPSOCKADDR)&addr, sizeof(addr)))) {   //转化成LPSOCKADDR才行
+		printf("错误码：%d    ", WSAGetLastError());
+		printf("服务器端绑定失败\n");
+		exit(-1);
+	}*/
+	pTFTPClientHeader pHeader = (pTFTPClientHeader)pMsg;
+	int a = sendto(g_clientSock, (char*)(pMsg + sizeof(sTFTPClientHeader)), pHeader->size, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
+	for (int i = 0; i < pHeader->size; i++)
+	{
+		printf_s("%c", (char*)(pMsg + sizeof(sTFTPClientHeader))[i]);
+	}
+	for (int i = 0; i < pHeader->size; i++)
+	{
+		printf_s("%02x ", (pMsg + sizeof(sTFTPClientHeader))[i]);
+	}
+	printf("\nreturn %d\n", a);
 }
 
 void tftp_io_send_msg()
@@ -39,7 +62,7 @@ void tftp_io_send_msg()
 		uint8_t* pMsg = g_TFTPClientMsgSendQueue.msg[i];
 		pTFTPClientHeader pHeader = (pTFTPClientHeader)pMsg;
 
-		sendto(g_clientSock, (char*)(pMsg + sizeof(sTFTPClientHeader)), pHeader->size, 0, (LPSOCKADDR)&g_addr, sizeof(g_addr));
+		sendto(g_clientSock, (char*)(pMsg + sizeof(sTFTPClientHeader)), pHeader->size, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
 		/*uint16_t msgType = ((uint16_t*)pMsg)[0];
 		switch (msgType)
 		{

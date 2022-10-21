@@ -1,12 +1,66 @@
 #include "tftp_client_msg.h"
 #include "tftp_clinet_io.h"
 #include "tftp_client_build.h"
+
 #define MAX_COMMAND_LENGTH		(10)
 #define MAX_PARAM_NUM			(3)
 #define MAX_PARAM_LENGTH		(1024)
 
 #define INIT_STATUS				(0)
 #define CONNECT_STATUS			(1)
+
+extern SOCKADDR_IN g_clientAddr;
+
+int split(char dst[][MAX_PARAM_LENGTH], char* str, const char* spl)
+{
+	int n = 0;
+	char* result = NULL;
+	result = strtok(str, spl);
+	while (result != NULL)
+	{
+		strcpy(dst[n++], result);
+		result = strtok(NULL, spl);
+	}
+	return n;
+}
+
+int parse_for_config()
+{
+	FILE* fp = fopen(".\\local\\tftp_client.ini", "r");
+	if (NULL == fp)
+	{
+		printf_s("file tftp_client.config not found.\n");
+		return 0;
+	}
+
+	map<string, string> mConfig;
+	char tmp[2048] = { '\0' };
+	int line = 0;
+	while (fscanf(fp,"%s", tmp) != EOF) 
+	{
+		line++;
+		char dst[2][MAX_PARAM_LENGTH];
+		if (2 != split(dst, tmp, "="))
+		{
+			printf_s("tftp_client.config: error config in line %d.\n", line);
+		}
+		mConfig[dst[0]] = dst[1];
+	}
+
+	g_clientAddr.sin_family = AF_INET;
+	g_clientAddr.sin_addr.S_un.S_addr = inet_addr(mConfig["client_ip"].c_str());
+	g_clientAddr.sin_port = htons(atoi(mConfig["client_port"].c_str()));
+
+	fclose(fp);
+	return 1;
+}
+
+int init()
+{
+	int retVal = 1;
+	retVal &= parse_for_config();
+	return retVal;
+}
 
 int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfParams)
 {
@@ -32,22 +86,10 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		// test
 		uint8_t* pMsg = (uint8_t*)malloc(sizeof(uint8_t) * 1024);
 		tftp_client_build_WRQ(pMsg, (uint8_t *)params[0], (uint8_t *)"netascii");
-		
+		test_send(pMsg);
 	}
 }
 
-int split(char dst[][MAX_PARAM_LENGTH], char* str, const char* spl)
-{
-	int n = 0;
-	char* result = NULL;
-	result = strtok(str, spl);
-	while (result != NULL)
-	{
-		strcpy(dst[n++], result);
-		result = strtok(NULL, spl);
-	}
-	return n;
-}
 
 int get_params_from_input(char* buff, char params[][MAX_PARAM_LENGTH])
 {
@@ -57,7 +99,11 @@ int get_params_from_input(char* buff, char params[][MAX_PARAM_LENGTH])
 
 int main()
 {
-	// init
+	if (!init())
+	{
+		printf_s("tftp client init failed.\n");
+		return 0;
+	}
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
 
@@ -75,5 +121,6 @@ int main()
 			break;
 		}
 	}
+	system("pause");
 	return 0;
 }

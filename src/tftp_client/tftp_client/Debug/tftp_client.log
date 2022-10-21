@@ -1,14 +1,10 @@
-﻿  tftp_client_build.cpp
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_build.cpp(13,2): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_build.cpp(14,2): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  tftp_client_io.cpp
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(13,32): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
-  tftp_clinet_main.cpp
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(43,11): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(46,3): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(47,12): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(70,3): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  正在生成代码...
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(37): warning C4715: “command_parse”: 不是所有的控件路径都返回值
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(31): warning C4717: “test_send”: 如递归所有控件路径，函数将导致运行时堆栈溢出
+﻿  tftp_clinet_main.cpp
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(18,11): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(21,3): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(22,12): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(29,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(39,9): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(51,38): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(116,3): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(91): warning C4715: “command_parse”: 不是所有的控件路径都返回值
   tftp_client.vcxproj -> E:\Github\Self_TFTP_Client\src\tftp_client\Debug\tftp_client.exe
