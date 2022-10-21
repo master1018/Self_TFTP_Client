@@ -6,6 +6,12 @@ SOCKADDR_IN g_serverAddr;
 SOCKADDR_IN g_clientAddr;
 SOCKET g_clientSock;
 
+uint8_t g_send_timing = 0;
+
+/*
+*	@brief build socket and bind to the dst
+*	@return return true when success build socket and bind
+*/
 bool tftp_clinet_io_build_connect(char* ip, int port)
 {
 	printf_s("connect to %s [%u]...\n", ip, port);
@@ -31,15 +37,6 @@ bool tftp_clinet_io_build_connect(char* ip, int port)
 
 void test_send(uint8_t* pMsg)
 {
-	/*SOCKADDR_IN addr;
-	addr.sin_port = 0;
-	addr.sin_family = AF_INET;
-	addr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
-	if ((bind(g_clientSock, (LPSOCKADDR)&addr, sizeof(addr)))) {   //转化成LPSOCKADDR才行
-		printf("错误码：%d    ", WSAGetLastError());
-		printf("服务器端绑定失败\n");
-		exit(-1);
-	}*/
 	pTFTPClientHeader pHeader = (pTFTPClientHeader)pMsg;
 	int a = sendto(g_clientSock, (char*)(pMsg + sizeof(sTFTPClientHeader)), pHeader->size, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
 	for (int i = 0; i < pHeader->size; i++)
@@ -53,6 +50,22 @@ void test_send(uint8_t* pMsg)
 	printf("\nreturn %d\n", a);
 }
 
+/*
+*	@brief	add msg to the send queue
+*/
+void tftp_io_add_msg(uint8_t* pMsg)
+{
+	assert(g_TFTPClientMsgSendQueue.num < MAX_NUM_OF_TFTP_CLIENT_SEND_MSG);
+	pTFTPClientHeader pHeader = (pTFTPClientHeader)pMsg;
+	// init element
+	memset(g_TFTPClientMsgSendQueue.msg[g_TFTPClientMsgSendQueue.num], 0, sizeof(MAX_TFTP_CLIENT_SEND_MSG_LENGTH));
+	memcpy(g_TFTPClientMsgSendQueue.msg[g_TFTPClientMsgSendQueue.num], pMsg, sizeof(pMsg));
+	g_TFTPClientMsgSendQueue.num++;
+}
+
+/*
+*	@brief	send msg that save in the queue
+*/
 void tftp_io_send_msg()
 {
 	uint8_t numOfPkts = g_TFTPClientMsgSendQueue.num;
@@ -61,26 +74,47 @@ void tftp_io_send_msg()
 	{
 		uint8_t* pMsg = g_TFTPClientMsgSendQueue.msg[i];
 		pTFTPClientHeader pHeader = (pTFTPClientHeader)pMsg;
-
+		while (1)
+		{
+			// waiting for recv thread
+			if (1 == g_send_timing)
+			{
+				break;
+			}
+		}
 		sendto(g_clientSock, (char*)(pMsg + sizeof(sTFTPClientHeader)), pHeader->size, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
-		/*uint16_t msgType = ((uint16_t*)pMsg)[0];
-		switch (msgType)
+		g_send_timing = 0;
+	}
+	g_TFTPClientMsgSendQueue.num = 0;
+}
+
+/*
+*	@brief	handle msg that recv from the server
+*/
+void tftp_client_io_handle_recv(uint8_t *pMsg)
+{
+	uint16_t nOperationCode = pMsg[1];
+	switch (nOperationCode)
+	{
+	default:
+		break;
+	}
+}
+
+/*
+*	@brief	recv pkt from the server
+*/
+void tftp_client_io_recv_thread()
+{
+	while (1)
+	{
+		uint8_t buf[MAX_TFTP_CLIENT_RECV_MSG_LENGTH] = { '\0' };
+		int serverAddrLen = sizeof(g_serverAddr);
+		int pktSize = recvfrom(g_clientSock, (char*)buf, MAX_TFTP_CLIENT_RECV_MSG_LENGTH, 0, (LPSOCKADDR)&g_serverAddr, &serverAddrLen);
+		if (pktSize > 0)
 		{
-		case RRQ_REQUEST_MSG:
-		{
-			return sendto(g_clientSock, (char *)pMsg, sizeof(pMsg), 0, (LPSOCKADDR)&g_addr, sizeof(g_addr));
-			break;
+			g_send_timing = 1;
 		}
-		case WRQ_REQUEST_MSG:
-		{
-			return sendto(g_clientSock, (char*)pMsg, sizeof(pMsg), 0, (LPSOCKADDR)&g_addr, sizeof(g_addr));
-			break;
-		}
-		case DATA_MSG:
-		case ACK_MSG:
-		case ERROR_MSG:
-		default:
-			break;
-		}*/
+
 	}
 }

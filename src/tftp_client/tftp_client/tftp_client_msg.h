@@ -5,7 +5,8 @@
 #define MAX_TFTP_CLINET_DATA_BYTES				(512)
 #define MAX_TFTP_CLINET_ERROR_MESSAGE_LENGTH	(50)
 #define MAX_TFTP_CLIENT_SEND_MSG_LENGTH			(2056)
-#define MAX_NUM_OF_TFTP_CLIENT_SEND_MSG			(10)
+#define MAX_NUM_OF_TFTP_CLIENT_SEND_MSG			(50)
+#define MAX_TFTP_CLIENT_RECV_MSG_LENGTH			MAX_TFTP_CLINET_ERROR_MESSAGE_LENGTH
 
 #define RRQ_REQUEST_MSG								(1)
 #define WRQ_REQUEST_MSG								(2)
@@ -43,6 +44,6 @@ typedef struct TFTP_CLIENT_HEADER {
 typedef struct TFTP_CLIENT_MSG_SEND_Queue {
 	uint8_t msg[MAX_NUM_OF_TFTP_CLIENT_SEND_MSG][MAX_TFTP_CLIENT_SEND_MSG_LENGTH];
 	uint8_t num;
-}sTFTPClientMsgSendQueue;
+}sTFTPClientMsgSendQueue, sTFTPClientMsgRecvQueue;
 #endif
 
