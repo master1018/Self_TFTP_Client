@@ -1,6 +1,7 @@
 #ifndef _TFTP_CLIENT_COMMON_DEF_H_ 
 #define _TFTP_CLIENT_COMMON_DEF_H_ 
 #include <map>
+#include <tuple>
 #include <string>
 #include <stdio.h>
 #include <string.h>

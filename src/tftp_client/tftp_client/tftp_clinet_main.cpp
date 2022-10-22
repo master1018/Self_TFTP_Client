@@ -10,6 +10,8 @@
 #define CONNECT_STATUS			(1)
 
 extern SOCKADDR_IN g_clientAddr;
+extern SOCKADDR_IN g_serverAddr;
+int port;
 
 int split(char dst[][MAX_PARAM_LENGTH], char* str, const char* spl)
 {
@@ -70,7 +72,8 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 	}
 	else if (0 == strcmp(command, CONNECT))
 	{
-		if (true == tftp_clinet_io_build_connect(params[0], nNumOfParams == 2 ? atoi(params[1]) : 69))
+		port = nNumOfParams == 2 ? atoi(params[1]) : 69;
+		if (true == tftp_clinet_io_build_connect(params[0], port))
 		{
 			printf_s("connect sucess.\n");
 		}
@@ -82,11 +85,23 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 	}
 	else if (0 == strcmp(command, PUT))
 	{
-		printf_s("download data: %s\n", params[0]);
-		// test
-		uint8_t* pMsg = (uint8_t*)malloc(sizeof(uint8_t) * 1024);
-		tftp_client_build_WRQ(pMsg, (uint8_t *)params[0], (uint8_t *)"netascii");
-		test_send(pMsg);
+		printf_s("upload data: %s\n", params[0]);
+		// build msg
+		uint8_t* pMsg = (uint8_t*)malloc(sizeof(uint8_t) * MAX_TFTP_CLIENT_RECV_MSG_LENGTH);
+		tftp_client_build_WRQ(pMsg, (uint8_t *)params[0], nNumOfParams == 1 ? (uint8_t *)"netascii" : (uint8_t *)(params[1] + 1));
+		tftp_client_io_add_msg(pMsg);
+		tftp_client_io_ul((uint8_t *)params[0]);
+		if (0 == tftp_client_io_send_msg())
+		{
+			printf_s("upload success.\n");
+		}
+		else
+		{
+			printf_s("upload failed.\n");
+		}
+		g_clientAddr.sin_port = 0;
+		g_serverAddr.sin_port = htons(port);
+		return 1;
 	}
 }
 
