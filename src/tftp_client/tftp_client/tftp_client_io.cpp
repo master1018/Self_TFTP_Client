@@ -117,19 +117,21 @@ tuple<uint16_t, uint16_t> tftp_client_io_handle_recv()
 */
 uint32_t tftp_client_io_send_msg()
 {
-	uint8_t numOfPkts = g_TFTPClientMsgSendQueue.num;
+	uint32_t numOfPkts = g_TFTPClientMsgSendQueue.num;
 	uint16_t nOperationCode, nBlockNumber;
-	for (int i = 0; i < numOfPkts; i++)
+	for (uint32_t i = 0; i < numOfPkts; i++)
 	{
 		uint8_t* pMsg = g_TFTPClientMsgSendQueue.msg[i];
 		pTFTPClientHeader pHeader = (pTFTPClientHeader)pMsg;
 		//for (int i = 0; i < pHeader->size + sizeof(sTFTPClientHeader); i++)
 		//	printf_s("%02x ", pMsg[i]);
 		//printf_s("\n");
-		printf_s("%u\n", g_serverAddr.sin_port);
+		//printf_s("%u\n", g_serverAddr.sin_port);
+		printf("send %d\n", i + 1);
 		sendto(g_clientSock, (char*)(pMsg + sizeof(sTFTPClientHeader)), pHeader->size, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
 		g_TFTPClientMsgSendQueue.num--;
 		tie(nOperationCode, nBlockNumber) = tftp_client_io_handle_recv();
+		printf_s("recv %d\n", i + 1);
 		// TODO recv msg and handle
 		switch (nOperationCode)
 		{
@@ -148,7 +150,7 @@ uint32_t tftp_client_io_send_msg()
 
 void tftp_client_io_ul(uint8_t* fileName)
 {
-	FILE* fp = fopen((char*)fileName, "r");
+	FILE* fp = fopen((char*)fileName, "rb");
 	if (NULL == fp)
 	{
 		printf_s("file %s no found.\n", fileName);

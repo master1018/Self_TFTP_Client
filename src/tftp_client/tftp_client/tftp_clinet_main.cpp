@@ -5,6 +5,7 @@
 #define MAX_COMMAND_LENGTH		(10)
 #define MAX_PARAM_NUM			(3)
 #define MAX_PARAM_LENGTH		(1024)
+#define MAX_DIR_PATH_LEN		(50)
 
 #define INIT_STATUS				(0)
 #define CONNECT_STATUS			(1)
@@ -12,6 +13,7 @@
 extern SOCKADDR_IN g_clientAddr;
 extern SOCKADDR_IN g_serverAddr;
 int port;
+char usr_dir[MAX_DIR_PATH_LEN] = { '\0' };
 
 int split(char dst[][MAX_PARAM_LENGTH], char* str, const char* spl)
 {
@@ -48,12 +50,15 @@ int parse_for_config()
 		}
 		mConfig[dst[0]] = dst[1];
 	}
+	fclose(fp);
 
 	g_clientAddr.sin_family = AF_INET;
 	g_clientAddr.sin_addr.S_un.S_addr = inet_addr(mConfig["client_ip"].c_str());
 	g_clientAddr.sin_port = htons(atoi(mConfig["client_port"].c_str()));
 
-	fclose(fp);
+	strcpy(usr_dir, mConfig["usr_dir"].c_str());
+
+	
 	return 1;
 }
 
