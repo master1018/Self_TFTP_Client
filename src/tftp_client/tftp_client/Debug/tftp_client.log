@@ -1,16 +1,6 @@
 ﻿  tftp_client_io.cpp
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(21,38): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(45,12): warning C4477: “printf_s”: 格式字符串“%c”需要类型“int”的参数，但可变参数 1 拥有了类型“char *”
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(153,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  tftp_clinet_main.cpp
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(22,11): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(25,3): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(26,12): warning C4996: 'strtok': This function or variable may be unsafe. Consider using strtok_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(33,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(43,9): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(56,38): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(59,2): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(136,3): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  正在生成代码...
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_clinet_main.cpp(111): warning C4715: “command_parse”: 不是所有的控件路径都返回值
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(14,20): warning C4018: “<”: 有符号/无符号不匹配
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(29,38): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(53,12): warning C4477: “printf_s”: 格式字符串“%c”需要类型“int”的参数，但可变参数 1 拥有了类型“char *”
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(176,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   tftp_client.vcxproj -> E:\Github\Self_TFTP_Client\src\tftp_client\Debug\tftp_client.exe

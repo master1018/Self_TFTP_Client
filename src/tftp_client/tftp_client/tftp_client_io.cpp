@@ -9,6 +9,14 @@ SOCKET g_clientSock;
 
 uint8_t g_send_timing = 0;
 
+void memcpy_self(uint8_t* dst, uint8_t* src, uint32_t size)
+{
+	for (int i = 0; i < size; i++)
+	{
+		dst[i] = src[i];
+	}
+}
+
 /*
 *	@brief build socket and bind to the dst
 *	@return return true when success build socket and bind
@@ -72,17 +80,23 @@ void tftp_client_io_add_msg(uint8_t* pMsg)
 int tftp_client_io_recv_msg(uint8_t *pMsg)
 {
 	uint8_t buf[MAX_TFTP_CLIENT_RECV_MSG_LENGTH] = { '\0' };
+	uint8_t* base = pMsg;
 	int serverAddrLen = sizeof(g_serverAddr);
 	while (1)
 	{
 		int pktSize = recvfrom(g_clientSock, (char*)buf, MAX_TFTP_CLIENT_RECV_MSG_LENGTH, 0, (LPSOCKADDR)&g_serverAddr, &serverAddrLen);
 		if (pktSize > 0)
 		{
-			memcpy(pMsg, buf, sizeof(pktSize));
+			memcpy_self(base, buf, pktSize);
 			return pktSize;
 		}
 	}
 	return -1;
+}
+
+void tftp_client_io_handle_error(pTFTPClinetError pMsg)
+{
+	printf_s("[error code %d] %s\n", pMsg->errorCode >> 8, (char*)(pMsg->errorMsg));
 }
 
 /*
@@ -106,6 +120,11 @@ tuple<uint16_t, uint16_t> tftp_client_io_handle_recv()
 		retVal = make_tuple(nOperationCode, ((pTFTPClientAck)pMsg)->blockNumber);
 		break;
 	}
+	case ERROR_MSG:
+	{
+		tftp_client_io_handle_error((pTFTPClinetError)pMsg);
+		break;
+	}
 	default:
 		break;
 	}
@@ -127,11 +146,15 @@ uint32_t tftp_client_io_send_msg()
 		//	printf_s("%02x ", pMsg[i]);
 		//printf_s("\n");
 		//printf_s("%u\n", g_serverAddr.sin_port);
-		printf("send %d\n", i + 1);
+		//printf("send %d\n", i + 1);
 		sendto(g_clientSock, (char*)(pMsg + sizeof(sTFTPClientHeader)), pHeader->size, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
 		g_TFTPClientMsgSendQueue.num--;
 		tie(nOperationCode, nBlockNumber) = tftp_client_io_handle_recv();
-		printf_s("recv %d\n", i + 1);
+		if (!nOperationCode && !nBlockNumber)
+		{
+			return -1;
+		}
+		//printf_s("recv %d\n", i + 1);
 		// TODO recv msg and handle
 		switch (nOperationCode)
 		{
@@ -148,14 +171,10 @@ uint32_t tftp_client_io_send_msg()
 	return g_TFTPClientMsgSendQueue.num;
 }
 
-void tftp_client_io_ul(uint8_t* fileName)
+uint32_t tftp_client_io_ul(uint8_t* fileName)
 {
 	FILE* fp = fopen((char*)fileName, "rb");
-	if (NULL == fp)
-	{
-		printf_s("file %s no found.\n", fileName);
-		return;
-	}
+	assert(fp != NULL);
 	fseek(fp, 0, SEEK_END);
 	int nSize = ftell(fp); 
 	fseek(fp, 0, SEEK_SET);
@@ -184,5 +203,5 @@ void tftp_client_io_ul(uint8_t* fileName)
 	tftp_client_io_add_msg(pMsg);
 	free(pMsg);
 	pMsg = NULL;
-
+	return 1;
 }

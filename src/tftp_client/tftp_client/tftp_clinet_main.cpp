@@ -91,18 +91,30 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 	else if (0 == strcmp(command, PUT))
 	{
 		printf_s("upload data: %s\n", params[0]);
+		FILE* fp = fopen((char*)params[0], "rb");
+		if (NULL == fp)
+		{
+			printf_s("file %s no found.\n", params[0]);
+			return 1;
+		}
 		// build msg
 		uint8_t* pMsg = (uint8_t*)malloc(sizeof(uint8_t) * MAX_TFTP_CLIENT_RECV_MSG_LENGTH);
 		tftp_client_build_WRQ(pMsg, (uint8_t *)params[0], nNumOfParams == 1 ? (uint8_t *)"netascii" : (uint8_t *)(params[1] + 1));
 		tftp_client_io_add_msg(pMsg);
-		tftp_client_io_ul((uint8_t *)params[0]);
-		if (0 == tftp_client_io_send_msg())
+		if (0 == tftp_client_io_ul((uint8_t*)params[0]))
 		{
-			printf_s("upload success.\n");
+			printf_s("upload failed.\n");
 		}
 		else
 		{
-			printf_s("upload failed.\n");
+			if (0 == tftp_client_io_send_msg())
+			{
+				printf_s("upload success.\n");
+			}
+			else
+			{
+				printf_s("upload failed.\n");
+			}
 		}
 		g_clientAddr.sin_port = 0;
 		g_serverAddr.sin_port = htons(port);
