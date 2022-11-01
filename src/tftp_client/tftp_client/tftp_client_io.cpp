@@ -3,6 +3,7 @@
 #include "tftp_client_build.h"
 
 sTFTPClientMsgSendQueue g_TFTPClientMsgSendQueue;
+sTFTPClientMsgRecvQueue g_TFTPClientMsgRecvQueue;
 SOCKADDR_IN g_serverAddr;
 SOCKADDR_IN g_clientAddr;
 SOCKET g_clientSock;
@@ -85,6 +86,7 @@ int tftp_client_io_recv_msg(uint8_t *pMsg)
 	while (1)
 	{
 		int pktSize = recvfrom(g_clientSock, (char*)buf, MAX_TFTP_CLIENT_RECV_MSG_LENGTH, 0, (LPSOCKADDR)&g_serverAddr, &serverAddrLen);
+		//printf("recv %d\n", pktSize);
 		if (pktSize > 0)
 		{
 			memcpy_self(base, buf, pktSize);
@@ -102,13 +104,14 @@ void tftp_client_io_handle_error(pTFTPClinetError pMsg)
 /*
 *	@brief	handle msg that recv from the server
 */
-tuple<uint16_t, uint16_t> tftp_client_io_handle_recv()
+tuple<uint16_t, uint16_t, uint16_t> tftp_client_io_handle_recv()
 {
 	uint8_t* pMsg = (uint8_t*)malloc(sizeof(uint8_t) * MAX_TFTP_CLIENT_RECV_MSG_LENGTH);
 	assert(pMsg != NULL);
 	// (0, 0) denote invalid msg
-	tuple<uint16_t, uint16_t> retVal(0, 0);
-	if (tftp_client_io_recv_msg(pMsg) < 0)
+	tuple<uint16_t, uint16_t, uint16_t> retVal(0, 0, 0);
+	uint32_t pktSize = tftp_client_io_recv_msg(pMsg);
+	if (pktSize < 0)
 	{
 		return retVal;
 	}
@@ -117,12 +120,20 @@ tuple<uint16_t, uint16_t> tftp_client_io_handle_recv()
 	{
 	case ACK_MSG:
 	{
-		retVal = make_tuple(nOperationCode, ((pTFTPClientAck)pMsg)->blockNumber);
+		retVal = make_tuple(nOperationCode, ntohs(((pTFTPClientAck)pMsg)->blockNumber), 0);
+		printf("%d\n", ((pTFTPClientAck)pMsg)->blockNumber);
 		break;
 	}
 	case ERROR_MSG:
 	{
 		tftp_client_io_handle_error((pTFTPClinetError)pMsg);
+		break;
+	}
+	case DATA_MSG:
+	{
+		retVal = make_tuple(nOperationCode, ntohs(((pTFTPClientAck)pMsg)->blockNumber), pktSize == 16 * 2 + 512 ? 0 : 1);
+		memcpy_self(g_TFTPClientMsgRecvQueue.msg[g_TFTPClientMsgRecvQueue.num], pMsg, pktSize);
+		g_TFTPClientMsgRecvQueue.num += 1;
 		break;
 	}
 	default:
@@ -137,7 +148,8 @@ tuple<uint16_t, uint16_t> tftp_client_io_handle_recv()
 uint32_t tftp_client_io_send_msg()
 {
 	uint32_t numOfPkts = g_TFTPClientMsgSendQueue.num;
-	uint16_t nOperationCode, nBlockNumber;
+	uint16_t nOperationCode, nBlockNumber, flag;
+	flag = 0;
 	for (uint32_t i = 0; i < numOfPkts; i++)
 	{
 		uint8_t* pMsg = g_TFTPClientMsgSendQueue.msg[i];
@@ -148,8 +160,13 @@ uint32_t tftp_client_io_send_msg()
 		//printf_s("%u\n", g_serverAddr.sin_port);
 		//printf("send %d\n", i + 1);
 		sendto(g_clientSock, (char*)(pMsg + sizeof(sTFTPClientHeader)), pHeader->size, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
+		memset(g_TFTPClientMsgSendQueue.msg[i], 0, 2056);
 		g_TFTPClientMsgSendQueue.num--;
-		tie(nOperationCode, nBlockNumber) = tftp_client_io_handle_recv();
+		if (flag == 1)
+			break;
+		RECV:
+		tie(nOperationCode, nBlockNumber, flag) = tftp_client_io_handle_recv();
+		printf_s("recv %d %d\n", nOperationCode, nBlockNumber);
 		if (!nOperationCode && !nBlockNumber)
 		{
 			return -1;
@@ -163,6 +180,16 @@ uint32_t tftp_client_io_send_msg()
 		{
 			if (nBlockNumber == i)
 				break;
+			else
+				goto RECV;
+		}
+		case DATA_MSG:
+		{
+			uint8_t* pMsg = (uint8_t*)malloc(sizeof(sTFTPClinetAck));
+			tftp_client_build_ACK(pMsg, nBlockNumber);
+			tftp_client_io_add_msg(pMsg);
+			i--;
+			break;
 		}
 		default:
 			break;
@@ -171,9 +198,9 @@ uint32_t tftp_client_io_send_msg()
 	return g_TFTPClientMsgSendQueue.num;
 }
 
-uint32_t tftp_client_io_ul(uint8_t* fileName)
+uint32_t tftp_client_io_ul(uint8_t* fileName, uint8_t mode)
 {
-	FILE* fp = fopen((char*)fileName, "rb");
+	FILE* fp = fopen((char*)fileName, mode == OCTET_MODE ? "rb" : "r");
 	assert(fp != NULL);
 	fseek(fp, 0, SEEK_END);
 	int nSize = ftell(fp); 
@@ -201,7 +228,32 @@ uint32_t tftp_client_io_ul(uint8_t* fileName)
 	assert(pMsg != NULL);
 	tftp_client_build_DATA(pMsg, offset / 512 + 1, base + offset, nSize - offset);
 	tftp_client_io_add_msg(pMsg);
+	if (nSize - offset == 512)
+	{
+		tftp_client_build_DATA(pMsg, offset / 512 + 2, 0, 0);
+		tftp_client_io_add_msg(pMsg);
+	}
 	free(pMsg);
 	pMsg = NULL;
 	return 1;
+}
+
+uint32_t tftp_client_io_dl(uint8_t* savePath, uint8_t mode)
+{
+	if (0 != tftp_client_io_send_msg())
+	{
+		return 1;
+	}
+	// save data
+	FILE* fp = fopen((char*)savePath, mode == 1 ? "w" : "wb");
+	uint32_t count = 0;
+	for (int i = 0; i < g_TFTPClientMsgRecvQueue.num; i++)
+	{
+		fwrite(g_TFTPClientMsgRecvQueue.msg[i], 1, strlen((char*)g_TFTPClientMsgRecvQueue.msg[i]), fp);
+		memset(g_TFTPClientMsgRecvQueue.msg[i], 0, 2056);
+		count++;
+	}
+	fclose(fp);
+	g_TFTPClientMsgRecvQueue.num -= count;
+	return g_TFTPClientMsgRecvQueue.num;
 }

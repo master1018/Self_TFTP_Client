@@ -99,9 +99,11 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		}
 		// build msg
 		uint8_t* pMsg = (uint8_t*)malloc(sizeof(uint8_t) * MAX_TFTP_CLIENT_RECV_MSG_LENGTH);
-		tftp_client_build_WRQ(pMsg, (uint8_t *)params[0], nNumOfParams == 1 ? (uint8_t *)"netascii" : (uint8_t *)(params[1] + 1));
+		tftp_client_build_WRQ(pMsg, (uint8_t *)params[0], nNumOfParams == 1 ? (uint8_t *)"netascii" :\
+			atoi(params[1]) == 1 ? (uint8_t *)"netascii" : (uint8_t *)"octet");
 		tftp_client_io_add_msg(pMsg);
-		if (0 == tftp_client_io_ul((uint8_t*)params[0]))
+		// 1 for netascii, 2 for octet
+		if (0 == tftp_client_io_ul((uint8_t*)params[0], nNumOfParams == 1 ? 1 : atoi(params[1])))
 		{
 			printf_s("upload failed.\n");
 		}
@@ -120,6 +122,26 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		g_serverAddr.sin_port = htons(port);
 		return 1;
 	}
+	else if (0 == strcmp(command, GET))
+	{
+		printf_s("download data: %s\n", params[0]);
+		FILE* fp = fopen(strcat(usr_dir, params[0]), "w");
+		assert(fp != NULL);
+		fclose(fp);
+		// build 
+		uint8_t* pMsg = (uint8_t*)malloc(sizeof(uint8_t) * MAX_TFTP_CLIENT_RECV_MSG_LENGTH);
+		tftp_client_build_RRQ(pMsg, (uint8_t*)params[0], nNumOfParams == 1 ? (uint8_t*)"netascii" : \
+			atoi(params[1]) == 1 ? (uint8_t*)"netascii" : (uint8_t*)"octet");
+		tftp_client_io_add_msg(pMsg);
+		if (0 == tftp_client_io_dl((uint8_t *)strcat(usr_dir, params[0]), nNumOfParams == 1 ? 1 : atoi(params[1])))
+		{
+			printf_s("download success.\n");
+		}
+		else
+		{
+			printf_s("download failed.\n");
+		}
+	}
 }
 
 
@@ -127,6 +149,22 @@ int get_params_from_input(char* buff, char params[][MAX_PARAM_LENGTH])
 {
 	int nNumOfParams = split(params, buff, " ");
 	return nNumOfParams;
+}
+
+void print_ui()
+{
+	printf("************************************************************************************************************\n");
+	printf("¡¡¡¡¡¡¡¡¡¡ ¡¡ __		|	TFTP Client Version 1.1\n");
+	printf("¡¡¡¡¡¡¡¡¡¡£¯£¾¡¡ ¥Õ		|	command:\n");
+	printf("¡¡¡¡¡¡¡¡¡¡| ¡¡_¡¡ _		|	--	connect [IP] [Port]\n");
+	printf("¡¡ ¡¡¡¡¡¡£¯`¥ß£ßx¥Î		|		Create connect between client and server, and the port default 69.\n");
+	printf("¡¡¡¡ ¡¡ /¡¡¡¡¡¡  |		|	--	put [fileName] [mode(1 for netascii, 2 for octet]\n");
+	printf("¡¡¡¡¡¡ /¡¡ ©c¡¡  |		|		Upload data to the server.\n");
+	printf("¡¡ ¡¡ |¡¡ |  |   |		|	--	get [fileName] [mode(1 for netascii, 2 for octet]\n");
+	printf("¡¡£¯£þ|¡¡  |  |  |		|		Download data from the server.\n");
+	printf("¡¡| (£þ©c£ß_©c_)__)		|	--	quit\n");
+	printf("¡¡£Ü¶þ¤Ä			|		End client\n");
+	printf("************************************************************************************************************\n");
 }
 
 int main()
@@ -142,6 +180,8 @@ int main()
 	char command[MAX_COMMAND_LENGTH];
 	char buff[2056];
 	char params[MAX_PARAM_NUM][MAX_PARAM_LENGTH];
+	print_ui();
+	printf_s("\n");
 	while (1)
 	{
 		printf_s("tftp>");

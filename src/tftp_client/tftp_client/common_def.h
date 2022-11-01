@@ -14,6 +14,7 @@ using namespace std;
 #define CONNECT		"connect"
 #define QUIT		"quit"
 #define PUT			"put"
+#define GET			"get"
 
 typedef unsigned char			uint8_t;
 typedef unsigned short int		uint16_t;
