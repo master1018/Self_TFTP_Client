@@ -1,8 +1,8 @@
 ﻿  tftp_client_io.cpp
 E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(15,20): warning C4018: “<”: 有符号/无符号不匹配
 E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(30,38): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(54,12): warning C4477: “printf_s”: 格式字符串“%c”需要类型“int”的参数，但可变参数 1 拥有了类型“char *”
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(203,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(250,20): warning C4018: “<”: 有符号/无符号不匹配
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(248,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(55,12): warning C4477: “printf_s”: 格式字符串“%c”需要类型“int”的参数，但可变参数 1 拥有了类型“char *”
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(226,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(273,20): warning C4018: “<”: 有符号/无符号不匹配
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(271,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   tftp_client.vcxproj -> E:\Github\Self_TFTP_Client\src\tftp_client\Debug\tftp_client.exe

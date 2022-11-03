@@ -1,1 +1,1 @@
-hello word
+hello word this is a test for tftp client.

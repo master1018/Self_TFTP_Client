@@ -45,6 +45,7 @@ bool tftp_clinet_io_build_connect(char* ip, int port)
 	return retVal;
 }
 
+
 void test_send(uint8_t* pMsg)
 {
 	pTFTPClientHeader pHeader = (pTFTPClientHeader)pMsg;
@@ -121,7 +122,6 @@ tuple<uint16_t, uint16_t, uint16_t> tftp_client_io_handle_recv()
 	case ACK_MSG:
 	{
 		retVal = make_tuple(nOperationCode, ntohs(((pTFTPClientAck)pMsg)->blockNumber), 0);
-		printf("%d\n", ((pTFTPClientAck)pMsg)->blockNumber);
 		break;
 	}
 	case ERROR_MSG:
@@ -131,8 +131,11 @@ tuple<uint16_t, uint16_t, uint16_t> tftp_client_io_handle_recv()
 	}
 	case DATA_MSG:
 	{
-		retVal = make_tuple(nOperationCode, ntohs(((pTFTPClientAck)pMsg)->blockNumber), pktSize == 16 * 2 + 512 ? 0 : 1);
-		memcpy_self(g_TFTPClientMsgRecvQueue.msg[g_TFTPClientMsgRecvQueue.num], pMsg, pktSize);
+		retVal = make_tuple(nOperationCode, ntohs(((pTFTPClientAck)pMsg)->blockNumber), pktSize == 516 ? 0 : 1);
+		sTFTPClientHeader sHeader;
+		sHeader.size = pktSize;
+		memcpy_self(g_TFTPClientMsgRecvQueue.msg[g_TFTPClientMsgRecvQueue.num], (uint8_t *)&sHeader, pktSize);
+		memcpy_self(g_TFTPClientMsgRecvQueue.msg[g_TFTPClientMsgRecvQueue.num] + sizeof(sTFTPClientHeader), pMsg, pktSize);
 		g_TFTPClientMsgRecvQueue.num += 1;
 		break;
 	}
@@ -147,8 +150,12 @@ tuple<uint16_t, uint16_t, uint16_t> tftp_client_io_handle_recv()
 */
 uint32_t tftp_client_io_send_msg()
 {
+	uint8_t count = 0;
 	uint32_t numOfPkts = g_TFTPClientMsgSendQueue.num;
 	uint16_t nOperationCode, nBlockNumber, flag;
+	uint8_t buff[2056];
+	uint32_t buffSize;
+	memset(buff, 0, 2056);
 	flag = 0;
 	for (uint32_t i = 0; i < numOfPkts; i++)
 	{
@@ -159,6 +166,8 @@ uint32_t tftp_client_io_send_msg()
 		//printf_s("\n");
 		//printf_s("%u\n", g_serverAddr.sin_port);
 		//printf("send %d\n", i + 1);
+		buffSize = pHeader->size;
+		memcpy_self(buff, pMsg + sizeof(sTFTPClientHeader), buffSize);
 		sendto(g_clientSock, (char*)(pMsg + sizeof(sTFTPClientHeader)), pHeader->size, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
 		memset(g_TFTPClientMsgSendQueue.msg[i], 0, 2056);
 		g_TFTPClientMsgSendQueue.num--;
@@ -166,7 +175,7 @@ uint32_t tftp_client_io_send_msg()
 			break;
 		RECV:
 		tie(nOperationCode, nBlockNumber, flag) = tftp_client_io_handle_recv();
-		printf_s("recv %d %d\n", nOperationCode, nBlockNumber);
+		//printf_s("recv %d %d\n", nOperationCode, nBlockNumber);
 		if (!nOperationCode && !nBlockNumber)
 		{
 			return -1;
@@ -179,9 +188,23 @@ uint32_t tftp_client_io_send_msg()
 		case ACK_MSG:
 		{
 			if (nBlockNumber == i)
+			{
+				count = 0;
+				memset(buff, 0, 2056);
 				break;
+			}
 			else
+			{
+				if (count == 3)
+				{
+					// retran
+					count = 0;
+					sendto(g_clientSock, (char*)buff, buffSize, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
+					goto RECV;
+				}
+				count++;
 				goto RECV;
+			}
 		}
 		case DATA_MSG:
 		{
@@ -249,7 +272,9 @@ uint32_t tftp_client_io_dl(uint8_t* savePath, uint8_t mode)
 	uint32_t count = 0;
 	for (int i = 0; i < g_TFTPClientMsgRecvQueue.num; i++)
 	{
-		fwrite(g_TFTPClientMsgRecvQueue.msg[i], 1, strlen((char*)g_TFTPClientMsgRecvQueue.msg[i]), fp);
+		pTFTPClientData pMsg = (pTFTPClientData)(g_TFTPClientMsgRecvQueue.msg[i] + sizeof(sTFTPClientHeader));
+		pTFTPClientHeader pHeader = (pTFTPClientHeader)g_TFTPClientMsgRecvQueue.msg[i];
+		fwrite(pMsg->data, 1, pHeader->size - 4, fp);
 		memset(g_TFTPClientMsgRecvQueue.msg[i], 0, 2056);
 		count++;
 	}

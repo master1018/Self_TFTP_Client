@@ -27,6 +27,9 @@
     <ClInclude Include="tftp_client_build.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="tftp_client_stat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tftp_client_io.cpp">

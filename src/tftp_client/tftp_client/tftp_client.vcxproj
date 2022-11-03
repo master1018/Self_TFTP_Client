@@ -142,6 +142,7 @@
     <ClInclude Include="common_def.h" />
     <ClInclude Include="tftp_client_build.h" />
     <ClInclude Include="tftp_client_msg.h" />
+    <ClInclude Include="tftp_client_stat.h" />
     <ClInclude Include="tftp_clinet_io.h" />
   </ItemGroup>
   <ItemGroup>

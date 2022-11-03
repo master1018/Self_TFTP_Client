@@ -125,7 +125,10 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 	else if (0 == strcmp(command, GET))
 	{
 		printf_s("download data: %s\n", params[0]);
-		FILE* fp = fopen(strcat(usr_dir, params[0]), "w");
+		uint8_t filePath[1024] = { '\0' };
+		strcpy((char *)filePath, usr_dir);
+		strcat((char*)filePath, params[0]);
+		FILE* fp = fopen((char *)filePath, "w");
 		assert(fp != NULL);
 		fclose(fp);
 		// build 
@@ -133,7 +136,7 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		tftp_client_build_RRQ(pMsg, (uint8_t*)params[0], nNumOfParams == 1 ? (uint8_t*)"netascii" : \
 			atoi(params[1]) == 1 ? (uint8_t*)"netascii" : (uint8_t*)"octet");
 		tftp_client_io_add_msg(pMsg);
-		if (0 == tftp_client_io_dl((uint8_t *)strcat(usr_dir, params[0]), nNumOfParams == 1 ? 1 : atoi(params[1])))
+		if (0 == tftp_client_io_dl(filePath, nNumOfParams == 1 ? 1 : atoi(params[1])))
 		{
 			printf_s("download success.\n");
 		}
@@ -141,6 +144,9 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		{
 			printf_s("download failed.\n");
 		}
+		g_clientAddr.sin_port = 0;
+		g_serverAddr.sin_port = htons(port);
+		return 1;
 	}
 }
 

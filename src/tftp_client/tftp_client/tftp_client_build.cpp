@@ -91,7 +91,12 @@ void tftp_client_build_ACK(uint8_t* pMsg, uint16_t nBlockNumber)
 	assert(pAckMsg != NULL);
 	pAckMsg->operationCode		=		htons(ACK_MSG);
 	pAckMsg->blockNumber		=		htons(nBlockNumber);
+	pTFTPClientHeader pHeader = (pTFTPClientHeader)malloc(sizeof(sTFTPClientHeader));
+	assert(pHeader != NULL);
+	pHeader->size = sizeof(pAckMsg->operationCode) + sizeof(pAckMsg->blockNumber);
+	tftp_client_build_add_header(pMsg, pHeader);
 	uint8_t* base = pMsg;
+	base += sizeof(sTFTPClientHeader);
 	memcpy(base, &(pAckMsg->operationCode), sizeof(pAckMsg->operationCode));
 	base += sizeof(pAckMsg->operationCode);
 	memcpy(base, &(pAckMsg->blockNumber), sizeof(pAckMsg->blockNumber));
