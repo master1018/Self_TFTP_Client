@@ -11,10 +11,11 @@ void tftp_client_stat_log()
 	// get time
 	GetLocalTime(&sysTime);
 	fprintf(fp, "%4d-%2d-%2d %2d:%2d:%2d\n", sysTime.wYear, sysTime.wMonth, sysTime.wDay, sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
+	fprintf(fp, "STATE: %s\n", g_TFTPClientStatMsg.state == 1 ? "SUCCESS" : "FAILED");
 	fprintf(fp, "+---------------------------------------------------------------------------------------------------------------------------------------------------+\n");
 	fprintf(fp, "|	numUlPkts	|	numDlPkts	|	numRetranPkts	|	ulRate	|	dlRate	|\n");
 	fprintf(fp, "+---------------------------------------------------------------------------------------------------------------------------------------------------+\n");
-	fprintf(fp, "| %10d			| %10d			| %10d     | %8.2lf bps     | %8.2lf bps     |\n", g_TFTPClientStatMsg.ulPkts, g_TFTPClientStatMsg.dlPkts, g_TFTPClientStatMsg.numReTran,\
+	fprintf(fp, "| %10d			| %10d			| %10d				| %8.2lf bps     | %8.2lf bps     |\n", g_TFTPClientStatMsg.ulPkts, g_TFTPClientStatMsg.dlPkts, g_TFTPClientStatMsg.numReTran,\
 		g_TFTPClientStatMsg.cal_rate_ul(), g_TFTPClientStatMsg.cal_rate_dl());
 	fprintf(fp, "-----------------------------------------------------------------------------------------------------------------------------------------------------\n");
 	fprintf(fp, "\n\n");

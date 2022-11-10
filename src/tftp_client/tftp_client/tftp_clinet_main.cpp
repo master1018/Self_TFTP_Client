@@ -15,6 +15,7 @@ extern SOCKADDR_IN g_serverAddr;
 int port;
 char usr_dir[MAX_DIR_PATH_LEN] = { '\0' };
 extern uint8_t g_signal;
+extern sTFTPClientStatMsg g_TFTPClientStatMsg;;
 
 int split(char dst[][MAX_PARAM_LENGTH], char* str, const char* spl)
 {
@@ -108,16 +109,19 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		if (0 == tftp_client_io_ul((uint8_t*)params[0], nNumOfParams == 1 ? 1 : atoi(params[1])))
 		{
 			printf_s("upload failed.\n");
+			g_TFTPClientStatMsg.state = 0;
 		}
 		else
 		{
 			if (0 == tftp_client_io_send_msg())
 			{
 				printf_s("upload success.\n");
+				g_TFTPClientStatMsg.state = 1;
 			}
 			else
 			{
 				printf_s("upload failed.\n");
+				g_TFTPClientStatMsg.state = 0;
 			}
 		}
 		g_clientAddr.sin_port = 0;
@@ -145,10 +149,12 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		if (0 == tftp_client_io_dl(filePath, nNumOfParams == 1 ? 1 : atoi(params[1])))
 		{
 			printf_s("download success.\n");
+			g_TFTPClientStatMsg.state = 1;
 		}
 		else
 		{
 			printf_s("download failed.\n");
+			g_TFTPClientStatMsg.state = 0;
 		}
 		g_clientAddr.sin_port = 0;
 		g_serverAddr.sin_port = htons(port);

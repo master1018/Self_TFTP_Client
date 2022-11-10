@@ -10,6 +10,8 @@ typedef struct TFTP_CLIENT_STAT_MSG {
 	uint32_t numReTran;  // num of pkts reTransfer
 	uint32_t sizeReTran;
 	clock_t start, end;
+	uint8_t state;
+	uint8_t erroInfo[256];
 	double time;
 	void init()
 	{
@@ -17,6 +19,8 @@ typedef struct TFTP_CLIENT_STAT_MSG {
 		this->ulPkts = this->dlPkts = this->numReTran = 0;
 		this->ulSize = this->dlSize = this->sizeReTran = 0;
 		this->time = 0.0;
+		this->state = 0;
+		memset(this->erroInfo, 0, 256);
 	}
 
 	void update_time()

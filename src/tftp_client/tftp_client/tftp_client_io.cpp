@@ -9,7 +9,7 @@ sTFTPClientMsgRecvQueue g_TFTPClientMsgRecvQueue;
 SOCKADDR_IN g_serverAddr;
 SOCKADDR_IN g_clientAddr;
 SOCKET g_clientSock;
-
+#define TIME_OUT 10
 uint8_t g_send_timing = 0;
 
 void memcpy_self(uint8_t* dst, uint8_t* src, uint32_t size)
@@ -44,12 +44,6 @@ bool tftp_clinet_io_build_connect(char* ip, int port)
 		retVal = false;
 	}
 
-
-	struct timeval tv;
-	tv.tv_sec = 3;
-	tv.tv_usec = 0;
-	int ret = setsockopt(g_clientSock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
-	assert(ret >= 0);
 	
 	return retVal;
 }
@@ -93,7 +87,8 @@ int tftp_client_io_recv_msg(uint8_t *pMsg)
 	uint8_t buf[MAX_TFTP_CLIENT_RECV_MSG_LENGTH] = { '\0' };
 	uint8_t* base = pMsg;
 	int serverAddrLen = sizeof(g_serverAddr);
-	while (1)
+	int count = 0;
+	for (; count < TIME_OUT; count++)
 	{
 		int pktSize = recvfrom(g_clientSock, (char*)buf, MAX_TFTP_CLIENT_RECV_MSG_LENGTH, 0, (LPSOCKADDR)&g_serverAddr, &serverAddrLen);
 		//printf("recv %d\n", pktSize);
@@ -109,6 +104,8 @@ int tftp_client_io_recv_msg(uint8_t *pMsg)
 void tftp_client_io_handle_error(pTFTPClinetError pMsg)
 {
 	printf_s("[error code %d] %s\n", pMsg->errorCode >> 8, (char*)(pMsg->errorMsg));
+	memset(g_TFTPClientStatMsg.erroInfo, 0, 256);
+	sprintf((char *)(g_TFTPClientStatMsg.erroInfo), "[error code %d] %s\n", pMsg->errorCode >> 8, (char*)(pMsg->errorMsg));
 }
 
 /*
@@ -136,6 +133,7 @@ tuple<uint16_t, uint16_t, uint16_t> tftp_client_io_handle_recv()
 	case ERROR_MSG:
 	{
 		tftp_client_io_handle_error((pTFTPClinetError)pMsg);
+		retVal = make_tuple(0, 0, 2);
 		break;
 	}
 	case DATA_MSG:
@@ -161,11 +159,18 @@ tuple<uint16_t, uint16_t, uint16_t> tftp_client_io_handle_recv()
 */
 uint32_t tftp_client_io_send_msg()
 {
+	struct timeval tv;
+	tv.tv_sec = 5;
+	tv.tv_usec = 0;
+	int ret = setsockopt(g_clientSock, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(tv));
+	assert(ret >= 0);
+
 	uint8_t count = 0;
 	uint32_t numOfPkts = g_TFTPClientMsgSendQueue.num;
 	uint16_t nOperationCode, nBlockNumber, flag;
 	uint8_t buff[2056];
 	uint32_t buffSize;
+	int printLen = 0;
 	memset(buff, 0, 2056);
 	flag = 0;
 	for (uint32_t i = 0; i < numOfPkts; i++)
@@ -186,12 +191,20 @@ uint32_t tftp_client_io_send_msg()
 		tie(nOperationCode, nBlockNumber, flag) = tftp_client_io_handle_recv();
 		if (!nOperationCode && !nBlockNumber)
 		{
+			if (flag == 2) // find error
+				return 1;
 			RETRAN:
 			if (count == 5)
-				return -1;
+			{
+				memset(g_TFTPClientStatMsg.erroInfo, 0, 256);
+				memcpy_self(g_TFTPClientStatMsg.erroInfo, (uint8_t *)"Time out", 8);
+				return 1;
+			}
 			else
 			{
 				//Retran
+				printf("time out, retran %d\n", count + 1);
+				g_TFTPClientStatMsg.numReTran += 1;
 				sendto(g_clientSock, (char*)buff, buffSize, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
 				count++;
 				goto RECV;
@@ -212,7 +225,6 @@ uint32_t tftp_client_io_send_msg()
 				count = 0;
 				g_TFTPClientStatMsg.ulPkts += 1;
 				g_TFTPClientStatMsg.ulSize += buffSize;
-				printf("upload object (%d/%d)\n", g_TFTPClientStatMsg.ulPkts, numOfPkts);
 				memset(buff, 0, 2056);
 				break;
 			}
@@ -227,7 +239,6 @@ uint32_t tftp_client_io_send_msg()
 			tftp_client_build_ACK(pMsg, nBlockNumber);
 			tftp_client_io_add_msg(pMsg);
 			i--;
-			printf("download object (%d)\n", g_TFTPClientStatMsg.dlPkts);
 			break;
 		}
 		default:
