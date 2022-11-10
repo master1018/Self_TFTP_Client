@@ -1,7 +1,9 @@
 #include "tftp_client_msg.h"
 #include "tftp_clinet_io.h"
 #include "tftp_client_build.h"
+#include "tftp_client_stat.h"
 
+extern sTFTPClientStatMsg g_TFTPClientStatMsg;;
 sTFTPClientMsgSendQueue g_TFTPClientMsgSendQueue;
 sTFTPClientMsgRecvQueue g_TFTPClientMsgRecvQueue;
 SOCKADDR_IN g_serverAddr;
@@ -41,6 +43,13 @@ bool tftp_clinet_io_build_connect(char* ip, int port)
 	{
 		retVal = false;
 	}
+
+
+	struct timeval tv;
+	tv.tv_sec = 3;
+	tv.tv_usec = 0;
+	int ret = setsockopt(g_clientSock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
+	assert(ret >= 0);
 	
 	return retVal;
 }
@@ -137,6 +146,8 @@ tuple<uint16_t, uint16_t, uint16_t> tftp_client_io_handle_recv()
 		memcpy_self(g_TFTPClientMsgRecvQueue.msg[g_TFTPClientMsgRecvQueue.num], (uint8_t *)&sHeader, pktSize);
 		memcpy_self(g_TFTPClientMsgRecvQueue.msg[g_TFTPClientMsgRecvQueue.num] + sizeof(sTFTPClientHeader), pMsg, pktSize);
 		g_TFTPClientMsgRecvQueue.num += 1;
+		g_TFTPClientStatMsg.dlSize += pktSize;
+		g_TFTPClientStatMsg.dlPkts += 1;
 		break;
 	}
 	default:
@@ -161,13 +172,11 @@ uint32_t tftp_client_io_send_msg()
 	{
 		uint8_t* pMsg = g_TFTPClientMsgSendQueue.msg[i];
 		pTFTPClientHeader pHeader = (pTFTPClientHeader)pMsg;
-		//for (int i = 0; i < pHeader->size + sizeof(sTFTPClientHeader); i++)
-		//	printf_s("%02x ", pMsg[i]);
-		//printf_s("\n");
-		//printf_s("%u\n", g_serverAddr.sin_port);
-		//printf("send %d\n", i + 1);
 		buffSize = pHeader->size;
 		memcpy_self(buff, pMsg + sizeof(sTFTPClientHeader), buffSize);
+
+		g_TFTPClientStatMsg.start = clock();
+
 		sendto(g_clientSock, (char*)(pMsg + sizeof(sTFTPClientHeader)), pHeader->size, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
 		memset(g_TFTPClientMsgSendQueue.msg[i], 0, 2056);
 		g_TFTPClientMsgSendQueue.num--;
@@ -175,12 +184,23 @@ uint32_t tftp_client_io_send_msg()
 			break;
 		RECV:
 		tie(nOperationCode, nBlockNumber, flag) = tftp_client_io_handle_recv();
-		//printf_s("recv %d %d\n", nOperationCode, nBlockNumber);
 		if (!nOperationCode && !nBlockNumber)
 		{
-			return -1;
+			RETRAN:
+			if (count == 5)
+				return -1;
+			else
+			{
+				//Retran
+				sendto(g_clientSock, (char*)buff, buffSize, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
+				count++;
+				goto RECV;
+			}
 		}
-		//printf_s("recv %d\n", i + 1);
+		
+		g_TFTPClientStatMsg.end = clock();
+		g_TFTPClientStatMsg.update_time();
+
 		// TODO recv msg and handle
 		switch (nOperationCode)
 		{
@@ -190,20 +210,15 @@ uint32_t tftp_client_io_send_msg()
 			if (nBlockNumber == i)
 			{
 				count = 0;
+				g_TFTPClientStatMsg.ulPkts += 1;
+				g_TFTPClientStatMsg.ulSize += buffSize;
+				printf("upload object (%d/%d)\n", g_TFTPClientStatMsg.ulPkts, numOfPkts);
 				memset(buff, 0, 2056);
 				break;
 			}
 			else
 			{
-				if (count == 3)
-				{
-					// retran
-					count = 0;
-					sendto(g_clientSock, (char*)buff, buffSize, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
-					goto RECV;
-				}
-				count++;
-				goto RECV;
+				goto RETRAN;
 			}
 		}
 		case DATA_MSG:
@@ -212,6 +227,7 @@ uint32_t tftp_client_io_send_msg()
 			tftp_client_build_ACK(pMsg, nBlockNumber);
 			tftp_client_io_add_msg(pMsg);
 			i--;
+			printf("download object (%d)\n", g_TFTPClientStatMsg.dlPkts);
 			break;
 		}
 		default:
@@ -223,6 +239,7 @@ uint32_t tftp_client_io_send_msg()
 
 uint32_t tftp_client_io_ul(uint8_t* fileName, uint8_t mode)
 {
+	g_TFTPClientStatMsg.init();
 	FILE* fp = fopen((char*)fileName, mode == OCTET_MODE ? "rb" : "r");
 	assert(fp != NULL);
 	fseek(fp, 0, SEEK_END);
@@ -263,6 +280,7 @@ uint32_t tftp_client_io_ul(uint8_t* fileName, uint8_t mode)
 
 uint32_t tftp_client_io_dl(uint8_t* savePath, uint8_t mode)
 {
+	g_TFTPClientStatMsg.init();
 	if (0 != tftp_client_io_send_msg())
 	{
 		return 1;

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <WinSock2.h>
 #include <assert.h>
+#include <Windows.h>
 #pragma comment(lib,"Ws2_32.lib")
 using namespace std;
 // command that valid

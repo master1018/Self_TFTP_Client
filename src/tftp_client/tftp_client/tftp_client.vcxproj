@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClCompile Include="tftp_client_build.cpp" />
     <ClCompile Include="tftp_client_io.cpp" />
+    <ClCompile Include="tftp_client_stat.cpp" />
     <ClCompile Include="tftp_clinet_main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

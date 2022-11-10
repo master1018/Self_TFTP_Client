@@ -1,7 +1,7 @@
 #include "tftp_client_msg.h"
 #include "tftp_clinet_io.h"
 #include "tftp_client_build.h"
-
+#include "tftp_client_stat.h"
 #define MAX_COMMAND_LENGTH		(10)
 #define MAX_PARAM_NUM			(3)
 #define MAX_PARAM_LENGTH		(1024)
@@ -14,6 +14,7 @@ extern SOCKADDR_IN g_clientAddr;
 extern SOCKADDR_IN g_serverAddr;
 int port;
 char usr_dir[MAX_DIR_PATH_LEN] = { '\0' };
+extern uint8_t g_signal;
 
 int split(char dst[][MAX_PARAM_LENGTH], char* str, const char* spl)
 {
@@ -90,6 +91,7 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 	}
 	else if (0 == strcmp(command, PUT))
 	{
+		HANDLE hHandle = CreateThread(NULL, 0, tftp_client_stat_thread, NULL, 0, NULL);
 		printf_s("upload data: %s\n", params[0]);
 		FILE* fp = fopen((char*)params[0], "rb");
 		if (NULL == fp)
@@ -120,10 +122,14 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		}
 		g_clientAddr.sin_port = 0;
 		g_serverAddr.sin_port = htons(port);
+		g_signal = 1;
+		Sleep(100);
+		CloseHandle(hHandle);
 		return 1;
 	}
 	else if (0 == strcmp(command, GET))
 	{
+		HANDLE hHandle = CreateThread(NULL, 0, tftp_client_stat_thread, NULL, 0, NULL);
 		printf_s("download data: %s\n", params[0]);
 		uint8_t filePath[1024] = { '\0' };
 		strcpy((char *)filePath, usr_dir);
@@ -146,6 +152,9 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		}
 		g_clientAddr.sin_port = 0;
 		g_serverAddr.sin_port = htons(port);
+		g_signal = 1;
+		Sleep(100);
+		CloseHandle(hHandle);
 		return 1;
 	}
 }
