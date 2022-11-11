@@ -44,6 +44,13 @@ typedef struct TFTP_CLIENT_HEADER {
 typedef struct TFTP_CLIENT_MSG_SEND_Queue {
 	uint8_t msg[MAX_NUM_OF_TFTP_CLIENT_SEND_MSG][MAX_TFTP_CLIENT_SEND_MSG_LENGTH];
 	uint32_t num;
+	void init()
+	{
+		this->num = 0;
+		for (int i = 0; i < MAX_NUM_OF_TFTP_CLIENT_SEND_MSG; i++)
+			for (int j = 0; j < MAX_TFTP_CLIENT_SEND_MSG_LENGTH; j++)
+				(this->msg)[i][j] = 0;
+	}
 }sTFTPClientMsgSendQueue, sTFTPClientMsgRecvQueue;
 #endif
 

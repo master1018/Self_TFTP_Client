@@ -9,8 +9,9 @@ sTFTPClientMsgRecvQueue g_TFTPClientMsgRecvQueue;
 SOCKADDR_IN g_serverAddr;
 SOCKADDR_IN g_clientAddr;
 SOCKET g_clientSock;
-#define TIME_OUT 10
+#define TIME_OUT 25
 uint8_t g_send_timing = 0;
+uint32_t expectRecv;
 
 void memcpy_self(uint8_t* dst, uint8_t* src, uint32_t size)
 {
@@ -26,7 +27,6 @@ void memcpy_self(uint8_t* dst, uint8_t* src, uint32_t size)
 */
 bool tftp_clinet_io_build_connect(char* ip, int port)
 {
-	printf_s("connect to %s [%u]...\n", ip, port);
 	bool retVal = true;
 	g_serverAddr.sin_family = AF_INET;
 	g_serverAddr.sin_addr.S_un.S_addr = inet_addr(ip);
@@ -141,11 +141,15 @@ tuple<uint16_t, uint16_t, uint16_t> tftp_client_io_handle_recv()
 		retVal = make_tuple(nOperationCode, ntohs(((pTFTPClientAck)pMsg)->blockNumber), pktSize == 516 ? 0 : 1);
 		sTFTPClientHeader sHeader;
 		sHeader.size = pktSize;
-		memcpy_self(g_TFTPClientMsgRecvQueue.msg[g_TFTPClientMsgRecvQueue.num], (uint8_t *)&sHeader, pktSize);
-		memcpy_self(g_TFTPClientMsgRecvQueue.msg[g_TFTPClientMsgRecvQueue.num] + sizeof(sTFTPClientHeader), pMsg, pktSize);
-		g_TFTPClientMsgRecvQueue.num += 1;
-		g_TFTPClientStatMsg.dlSize += pktSize;
-		g_TFTPClientStatMsg.dlPkts += 1;
+		if (ntohs(((pTFTPClientAck)pMsg)->blockNumber) == expectRecv)
+		{
+			memcpy_self(g_TFTPClientMsgRecvQueue.msg[g_TFTPClientMsgRecvQueue.num], (uint8_t*)&sHeader, pktSize);
+			memcpy_self(g_TFTPClientMsgRecvQueue.msg[g_TFTPClientMsgRecvQueue.num] + sizeof(sTFTPClientHeader), pMsg, pktSize);
+			g_TFTPClientMsgRecvQueue.num += 1;
+			g_TFTPClientStatMsg.dlSize += pktSize;
+			g_TFTPClientStatMsg.dlPkts += 1;
+			expectRecv++;
+		}
 		break;
 	}
 	default:
@@ -159,12 +163,12 @@ tuple<uint16_t, uint16_t, uint16_t> tftp_client_io_handle_recv()
 */
 uint32_t tftp_client_io_send_msg()
 {
+	expectRecv = 1;
 	struct timeval tv;
-	tv.tv_sec = 5;
+	tv.tv_sec = 50;
 	tv.tv_usec = 0;
 	int ret = setsockopt(g_clientSock, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(tv));
 	assert(ret >= 0);
-
 	uint8_t count = 0;
 	uint32_t numOfPkts = g_TFTPClientMsgSendQueue.num;
 	uint16_t nOperationCode, nBlockNumber, flag;
@@ -182,6 +186,7 @@ uint32_t tftp_client_io_send_msg()
 
 		g_TFTPClientStatMsg.start = clock();
 
+		// send pkt
 		sendto(g_clientSock, (char*)(pMsg + sizeof(sTFTPClientHeader)), pHeader->size, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
 		memset(g_TFTPClientMsgSendQueue.msg[i], 0, 2056);
 		g_TFTPClientMsgSendQueue.num--;
@@ -194,7 +199,7 @@ uint32_t tftp_client_io_send_msg()
 			if (flag == 2) // find error
 				return 1;
 			RETRAN:
-			if (count == 5)
+			if (count == 10)
 			{
 				memset(g_TFTPClientStatMsg.erroInfo, 0, 256);
 				memcpy_self(g_TFTPClientStatMsg.erroInfo, (uint8_t *)"Time out", 8);
@@ -203,7 +208,7 @@ uint32_t tftp_client_io_send_msg()
 			else
 			{
 				//Retran
-				printf("time out, retran %d\n", count + 1);
+				//printf("time out, retran %d\n", count + 1);
 				g_TFTPClientStatMsg.numReTran += 1;
 				sendto(g_clientSock, (char*)buff, buffSize, 0, (LPSOCKADDR)&g_serverAddr, sizeof(g_serverAddr));
 				count++;
@@ -220,6 +225,7 @@ uint32_t tftp_client_io_send_msg()
 		// 当收到回应包时，继续流程
 		case ACK_MSG:
 		{
+			//printf("%d\n", nBlockNumber);
 			if (nBlockNumber == i)
 			{
 				count = 0;
@@ -257,7 +263,7 @@ uint32_t tftp_client_io_ul(uint8_t* fileName, uint8_t mode)
 	int nSize = ftell(fp); 
 	fseek(fp, 0, SEEK_SET);
 	assert(nSize > 0);
-	
+	sprintf((char *)(g_TFTPClientStatMsg.action), "upload %s | %s", fileName, mode == OCTET_MODE ? "octet" : "netascii");
 	uint8_t* pData = (uint8_t*)malloc(sizeof(uint8_t) * (nSize + 5));
 	assert(pData != NULL);
 	fread(pData, 1, nSize, fp);

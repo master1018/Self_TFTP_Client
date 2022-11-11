@@ -1,9 +1,10 @@
 ﻿  tftp_client_io.cpp
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(17,20): warning C4018: “<”: 有符号/无符号不匹配
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(18,20): warning C4018: “<”: 有符号/无符号不匹配
 E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(32,38): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
 E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(58,12): warning C4477: “printf_s”: 格式字符串“%c”需要类型“int”的参数，但可变参数 1 拥有了类型“char *”
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(109,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(255,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(303,20): warning C4018: “<”: 有符号/无符号不匹配
-E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(301,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(108,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(260,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(266,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(308,20): warning C4018: “<”: 有符号/无符号不匹配
+E:\Github\Self_TFTP_Client\src\tftp_client\tftp_client\tftp_client_io.cpp(306,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   tftp_client.vcxproj -> E:\Github\Self_TFTP_Client\src\tftp_client\Debug\tftp_client.exe

@@ -12,6 +12,7 @@ typedef struct TFTP_CLIENT_STAT_MSG {
 	clock_t start, end;
 	uint8_t state;
 	uint8_t erroInfo[256];
+	uint8_t action[256];
 	double time;
 	void init()
 	{
@@ -21,6 +22,7 @@ typedef struct TFTP_CLIENT_STAT_MSG {
 		this->time = 0.0;
 		this->state = 0;
 		memset(this->erroInfo, 0, 256);
+		memset(this->action, 0, 256);
 	}
 
 	void update_time()

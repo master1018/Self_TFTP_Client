@@ -12,10 +12,14 @@
 
 extern SOCKADDR_IN g_clientAddr;
 extern SOCKADDR_IN g_serverAddr;
+extern SOCKET g_clientSock;
 int port;
+char ip[128];
 char usr_dir[MAX_DIR_PATH_LEN] = { '\0' };
 extern uint8_t g_signal;
-extern sTFTPClientStatMsg g_TFTPClientStatMsg;;
+extern sTFTPClientStatMsg g_TFTPClientStatMsg;
+extern sTFTPClientMsgSendQueue g_TFTPClientMsgSendQueue;
+extern sTFTPClientMsgRecvQueue g_TFTPClientMsgRecvQueue;
 
 int split(char dst[][MAX_PARAM_LENGTH], char* str, const char* spl)
 {
@@ -73,14 +77,19 @@ int init()
 
 int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfParams)
 {
+	g_TFTPClientMsgSendQueue.init();
+	g_TFTPClientMsgRecvQueue.init();
 	if (0 == strcmp(command, QUIT))
 	{
 		return 0;
 	}
 	else if (0 == strcmp(command, CONNECT))
 	{
+		memset(ip, 0, 128);
+		sprintf(ip, "%s", params[0]);
 		port = nNumOfParams == 2 ? atoi(params[1]) : 69;
-		if (true == tftp_clinet_io_build_connect(params[0], port))
+		printf_s("connect to %s [%u]...\n", ip, port);
+		if (true == tftp_clinet_io_build_connect(ip, port))
 		{
 			printf_s("connect sucess.\n");
 		}
@@ -88,10 +97,12 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		{
 			printf_s("connect failed.\n");
 		}
+		closesocket(g_clientSock);
 		return 1;
 	}
 	else if (0 == strcmp(command, PUT))
 	{
+		tftp_clinet_io_build_connect(ip, port);
 		HANDLE hHandle = CreateThread(NULL, 0, tftp_client_stat_thread, NULL, 0, NULL);
 		printf_s("upload data: %s\n", params[0]);
 		FILE* fp = fopen((char*)params[0], "rb");
@@ -127,12 +138,16 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		g_clientAddr.sin_port = 0;
 		g_serverAddr.sin_port = htons(port);
 		g_signal = 1;
-		Sleep(100);
+		Sleep(50);
 		CloseHandle(hHandle);
+		closesocket(g_clientSock);
+		printf("send %dpkts | %dbytes, retran %dpkts | %dbytes\n", g_TFTPClientStatMsg.ulPkts, g_TFTPClientStatMsg.ulSize, g_TFTPClientStatMsg.numReTran, g_TFTPClientStatMsg.sizeReTran);
+		printf("rate: %.lfkb/s\n", g_TFTPClientStatMsg.cal_rate_ul() / 1000);
 		return 1;
 	}
 	else if (0 == strcmp(command, GET))
 	{
+		tftp_clinet_io_build_connect(ip, port);
 		HANDLE hHandle = CreateThread(NULL, 0, tftp_client_stat_thread, NULL, 0, NULL);
 		printf_s("download data: %s\n", params[0]);
 		uint8_t filePath[1024] = { '\0' };
@@ -141,6 +156,8 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		FILE* fp = fopen((char *)filePath, "w");
 		assert(fp != NULL);
 		fclose(fp);
+		sprintf((char*)(g_TFTPClientStatMsg.action), "download %s | %s", params[0], nNumOfParams == 1 ? (uint8_t*)"netascii" : \
+			atoi(params[1]) == 1 ? (uint8_t*)"netascii" : (uint8_t*)"octet");
 		// build 
 		uint8_t* pMsg = (uint8_t*)malloc(sizeof(uint8_t) * MAX_TFTP_CLIENT_RECV_MSG_LENGTH);
 		tftp_client_build_RRQ(pMsg, (uint8_t*)params[0], nNumOfParams == 1 ? (uint8_t*)"netascii" : \
@@ -159,8 +176,11 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		g_clientAddr.sin_port = 0;
 		g_serverAddr.sin_port = htons(port);
 		g_signal = 1;
-		Sleep(100);
+		Sleep(50);
 		CloseHandle(hHandle);
+		closesocket(g_clientSock);
+		printf("send %dpkts | %dbytes, retran %dpkts | %dbytes\n", g_TFTPClientStatMsg.dlPkts, g_TFTPClientStatMsg.dlSize, g_TFTPClientStatMsg.numReTran, g_TFTPClientStatMsg.sizeReTran);
+		printf("rate: %.lfkb/s\n", g_TFTPClientStatMsg.cal_rate_dl() / 1000);
 		return 1;
 	}
 }
