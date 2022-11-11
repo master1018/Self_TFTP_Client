@@ -13,6 +13,8 @@ void tftp_client_stat_log()
 	fprintf(fp, "%4d-%2d-%2d %2d:%2d:%2d\n", sysTime.wYear, sysTime.wMonth, sysTime.wDay, sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
 	fprintf(fp, "%s\n", g_TFTPClientStatMsg.action);
 	fprintf(fp, "STATE: %s\n", g_TFTPClientStatMsg.state == 1 ? "SUCCESS" : "FAILED");
+	if (g_TFTPClientStatMsg.state == 0)
+		fprintf(fp, "%s\n", g_TFTPClientStatMsg.erroInfo);
 	fprintf(fp, "+---------------------------------------------------------------------------------------------------------------------------------------------------+\n");
 	fprintf(fp, "|	numUlPkts	|	numDlPkts	|	numRetranPkts	|	ulRate	|	dlRate	|\n");
 	fprintf(fp, "+---------------------------------------------------------------------------------------------------------------------------------------------------+\n");

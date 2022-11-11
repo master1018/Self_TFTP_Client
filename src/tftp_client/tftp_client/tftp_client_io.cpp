@@ -298,6 +298,7 @@ uint32_t tftp_client_io_ul(uint8_t* fileName, uint8_t mode)
 uint32_t tftp_client_io_dl(uint8_t* savePath, uint8_t mode)
 {
 	g_TFTPClientStatMsg.init();
+	sprintf((char*)(g_TFTPClientStatMsg.action), "download %s | %s", savePath, mode == OCTET_MODE ? "octet" : "netascii");
 	if (0 != tftp_client_io_send_msg())
 	{
 		return 1;

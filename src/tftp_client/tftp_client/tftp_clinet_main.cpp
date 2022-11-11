@@ -156,8 +156,6 @@ int command_parse(char* command, char params[][MAX_PARAM_LENGTH], int nNumOfPara
 		FILE* fp = fopen((char *)filePath, "w");
 		assert(fp != NULL);
 		fclose(fp);
-		sprintf((char*)(g_TFTPClientStatMsg.action), "download %s | %s", params[0], nNumOfParams == 1 ? (uint8_t*)"netascii" : \
-			atoi(params[1]) == 1 ? (uint8_t*)"netascii" : (uint8_t*)"octet");
 		// build 
 		uint8_t* pMsg = (uint8_t*)malloc(sizeof(uint8_t) * MAX_TFTP_CLIENT_RECV_MSG_LENGTH);
 		tftp_client_build_RRQ(pMsg, (uint8_t*)params[0], nNumOfParams == 1 ? (uint8_t*)"netascii" : \
